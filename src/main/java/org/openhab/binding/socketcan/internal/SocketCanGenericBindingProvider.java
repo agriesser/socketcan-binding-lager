@@ -11,7 +11,10 @@ package org.openhab.binding.socketcan.internal;
 import java.util.Collection;
 
 import org.openhab.binding.socketcan.SocketCanBindingProvider;
+import org.openhab.core.binding.BindingProvider;
 import org.openhab.core.items.Item;
+import org.openhab.core.library.items.NumberItem;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.model.item.binding.AbstractGenericBindingProvider;
 import org.openhab.model.item.binding.BindingConfigParseException;
 
@@ -35,7 +38,7 @@ public class SocketCanGenericBindingProvider extends AbstractGenericBindingProvi
 	public String getBindingType() {
 		return "socketcan";
 	}
-
+	
 	/**
 	 * @{inheritDoc}
 	 */
@@ -55,10 +58,9 @@ public class SocketCanGenericBindingProvider extends AbstractGenericBindingProvi
 	public void processBindingConfiguration(String context, Item item, String bindingConfig) throws BindingConfigParseException {
 		super.processBindingConfiguration(context, item, bindingConfig);
 		SocketCanItemConfig config = new SocketCanItemConfig(item, bindingConfig);
+		addBindingConfig(item, config);
 		
-		//parse bindingconfig here ...
-		
-		addBindingConfig(item, config);		
+		// Initialization is done in SocketCanBinding!
 	}
 
 	@Override
@@ -68,14 +70,12 @@ public class SocketCanGenericBindingProvider extends AbstractGenericBindingProvi
 
 	@Override
 	public Collection<String> getPolledItems() {
-		// TODO Auto-generated method stub
-		return null;
+		return bindingConfigs.keySet();
 	}
 
 	@Override
 	public int getDestinationId(String polledItem) {
-		// TODO Auto-generated method stub
-		return 0;
+		return getItemConfig(polledItem).getDestId();
 	}
 	
 	

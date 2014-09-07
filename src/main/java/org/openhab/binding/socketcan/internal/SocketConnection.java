@@ -73,7 +73,7 @@ public class SocketConnection {
 		}
 	}
 	
-	private interface LagerMessageReceivedListener {
+	public interface LagerMessageReceivedListener {
 
 		public void messageReceived(int senderId, int receiverId, byte[] data);
 		
@@ -102,6 +102,10 @@ public class SocketConnection {
 					int canID = frame.getCanId().getCanId_SFF();
 					int source = LagerProtocol.getSenderId(canID);
 					int destination = LagerProtocol.getDestinationId(canID);
+					if (destination != sourceId) {
+						logger.info("Received frame not for me!");
+						continue;
+					}
 					if (listener != null) {
 						try {
 							listener.messageReceived(source, destination, frame.getData());

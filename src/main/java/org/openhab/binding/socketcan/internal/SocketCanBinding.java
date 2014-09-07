@@ -12,7 +12,9 @@ import java.util.Dictionary;
 
 import org.apache.commons.lang.StringUtils;
 import org.openhab.binding.socketcan.SocketCanBindingProvider;
+import org.openhab.binding.socketcan.internal.SocketConnection.LagerMessageReceivedListener;
 import org.openhab.core.binding.AbstractActiveBinding;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.osgi.service.cm.ConfigurationException;
@@ -28,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * @author agriesser
  * @since 0.0.1
  */
-public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProvider> implements ManagedService {
+public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProvider> implements ManagedService, LagerMessageReceivedListener {
 
 	private static final Logger logger = 
 		LoggerFactory.getLogger(SocketCanBinding.class);
@@ -53,7 +55,19 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		// should be reset when activating this binding again
 	}
 
+
+	public void bindingChanged(SocketCanBindingProvider provider, String itemName) {
+		super.bindingChanged(provider, itemName);
+		
+		SocketCanItemConfig itemConfig = provider.getItemConfig(itemName);
+		initializeItem(itemConfig);
+	}
 	
+	private void initializeItem(SocketCanItemConfig itemConfig) {
+		// TODO: here we need to init the current value of the item!
+	}
+
+
 	/**
 	 * @{inheritDoc}
 	 */
@@ -79,6 +93,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		logger.debug("execute() method is called!");
 		for (SocketCanBindingProvider provider : providers) {
 			for (String polledItem : provider.getPolledItems()) {
+				eventPublisher.postUpdate(polledItem, new DecimalType(100));
 				int destinationId = provider.getDestinationId(polledItem);
 			}
 		}
@@ -89,20 +104,28 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	 */
 	@Override
 	protected void internalReceiveCommand(String itemName, Command command) {
-		// the code being executed when a command was sent on the openHAB
-		// event bus goes here. This method is only called if one of the 
-		// BindingProviders provide a binding for the given 'itemName'.
 		logger.debug("internalReceiveCommand() is called!");
+		for (SocketCanBindingProvider provider : providers) {
+			if (provider.providesBindingFor(itemName)) {
+				SocketCanItemConfig config = provider.getItemConfig(itemName);
+				if (config.supportsCommand(command)) {
+					sendCommand(config);
+				}
+				return;
+			}
+		}
 	}
 	
+	private void sendCommand(SocketCanItemConfig config) {
+		// TODO get the socket and the interface, send the fckn data!
+	}
+
+
 	/**
 	 * @{inheritDoc}
 	 */
 	@Override
 	protected void internalReceiveUpdate(String itemName, State newState) {
-		// the code being executed when a state was sent on the openHAB
-		// event bus goes here. This method is only called if one of the 
-		// BindingProviders provide a binding for the given 'itemName'.
 		logger.debug("internalReceiveCommand() is called!");
 	}
 		
@@ -124,6 +147,24 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 
 			setProperlyConfigured(true);
 		}
+	}
+
+	@Override
+	public void messageReceived(int senderId, int receiverId, byte[] data) {	
+		// traverse all registered items and then act on those whose senderId matches their receiverId...
+		for (SocketCanBindingProvider provider : providers) {
+			for (String itemName : provider.getItemNames()) {
+				SocketCanItemConfig config = provider.getItemConfig(itemName);
+				if (config.destId == senderId) {
+					handleMessageFrom(config, data);
+				}
+			}
+		}
+	}
+
+	private void handleMessageFrom(SocketCanItemConfig config, byte[] data) {
+		State newState = config.transformToNewState(data);
+		eventPublisher.postUpdate(config.getItemName(), newState);
 	}
 	
 
