@@ -59,12 +59,21 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	public void bindingChanged(SocketCanBindingProvider provider, String itemName) {
 		super.bindingChanged(provider, itemName);
 		
+		// register as listener!
+		
 		SocketCanItemConfig itemConfig = provider.getItemConfig(itemName);
+		SocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
+		conn.addMessageReceivedListener(this);
+		try {
+			conn.open();
+		} catch (Exception e) {
+			logger.error("Error opening the connection!");
+		}
+		
 		initializeItem(itemConfig);
 	}
 	
 	private void initializeItem(SocketCanItemConfig itemConfig) {
-		// TODO: here we need to init the current value of the item!
 	}
 
 
@@ -109,15 +118,18 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 			if (provider.providesBindingFor(itemName)) {
 				SocketCanItemConfig config = provider.getItemConfig(itemName);
 				if (config.supportsCommand(command)) {
-					sendCommand(config);
+					sendCommand(config, command);
 				}
 				return;
 			}
 		}
 	}
 	
-	private void sendCommand(SocketCanItemConfig config) {
-		// TODO get the socket and the interface, send the fckn data!
+	private void sendCommand(SocketCanItemConfig config, Command command) {
+		SocketConnection connection = SocketCanActivator.getConnection(config.getCanInterfaceId());
+		// at this point the connection should be already open... 
+		byte[] data = LagerProtocol.commandToCanData(command, config);
+		connection.send(config.getDestId(), data);
 	}
 
 
@@ -152,11 +164,16 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	@Override
 	public void messageReceived(int senderId, int receiverId, byte[] data) {	
 		// traverse all registered items and then act on those whose senderId matches their receiverId...
+		if (LagerProtocol.isBroadcastId(receiverId)) {
+			logger.debug("received broadcast event!");
+		}
+		
 		for (SocketCanBindingProvider provider : providers) {
 			for (String itemName : provider.getItemNames()) {
 				SocketCanItemConfig config = provider.getItemConfig(itemName);
-				if (config.destId == senderId) {
+				if (config.getDestId() == senderId && config.isSameOutputId(data[0])) {
 					handleMessageFrom(config, data);
+					break;
 				}
 			}
 		}
@@ -164,7 +181,11 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 
 	private void handleMessageFrom(SocketCanItemConfig config, byte[] data) {
 		State newState = config.transformToNewState(data);
-		eventPublisher.postUpdate(config.getItemName(), newState);
+		if (newState != null) {
+			eventPublisher.postUpdate(config.getItemName(), newState);
+		} else {
+			logger.info("transformation failed for "+config.getItemName()+" and received data: "+data);
+		}
 	}
 	
 

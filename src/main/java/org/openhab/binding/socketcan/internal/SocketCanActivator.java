@@ -8,6 +8,9 @@
  */
 package org.openhab.binding.socketcan.internal;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -25,6 +28,8 @@ public final class SocketCanActivator implements BundleActivator {
 	private static Logger logger = LoggerFactory.getLogger(SocketCanActivator.class); 
 	
 	private static BundleContext context;
+	
+	private static Map<String, SocketConnection> connections = new HashMap<>();
 	
 	/**
 	 * Called whenever the OSGi framework starts our bundle
@@ -50,4 +55,12 @@ public final class SocketCanActivator implements BundleActivator {
 		return context;
 	}
 	
+	public static SocketConnection getConnection(String interfaceId) {
+		SocketConnection conn = connections.get(interfaceId);
+		if (conn == null) {
+			conn = new SocketConnection(interfaceId);
+			connections.put(interfaceId, conn);
+		}
+		return conn;
+	}
 }

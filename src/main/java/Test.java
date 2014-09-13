@@ -22,6 +22,15 @@ public class Test {
 		System.out.println(canId);
 		System.out.println(senderId);
 		System.out.println(destId);
+		
+		
+		
+		byte b = -1;
+		int i = b;
+		if (i < 0) {
+			i = 256 + b;
+		}
+		System.out.println(i);
 	}
 	
 }
