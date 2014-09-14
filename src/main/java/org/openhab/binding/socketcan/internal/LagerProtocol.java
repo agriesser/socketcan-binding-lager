@@ -34,6 +34,7 @@ public class LagerProtocol {
 			}
 			byte outputWithMask = (byte) (config.getOutputId() & 0b11111);
 			returnedArray[0] = (byte) (returnedArray[0] | outputWithMask);
+			return returnedArray;
 		}
 		return null;
 		

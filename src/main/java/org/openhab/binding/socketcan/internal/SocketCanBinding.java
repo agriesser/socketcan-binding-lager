@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.openhab.binding.socketcan.SocketCanBindingProvider;
 import org.openhab.binding.socketcan.internal.SocketConnection.LagerMessageReceivedListener;
 import org.openhab.core.binding.AbstractActiveBinding;
+import org.openhab.core.binding.BindingProvider;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
@@ -56,12 +57,12 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	}
 
 
-	public void bindingChanged(SocketCanBindingProvider provider, String itemName) {
+	public void bindingChanged(BindingProvider provider, String itemName) {
 		super.bindingChanged(provider, itemName);
 		
 		// register as listener!
 		
-		SocketCanItemConfig itemConfig = provider.getItemConfig(itemName);
+		SocketCanItemConfig itemConfig = ((SocketCanBindingProvider) provider).getItemConfig(itemName);
 		SocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
 		conn.addMessageReceivedListener(this);
 		try {
@@ -71,6 +72,22 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		}
 		
 		initializeItem(itemConfig);
+	}
+	
+	public void allBindingsChanged(BindingProvider provider) {
+		super.allBindingsChanged(provider);
+		
+		SocketCanBindingProvider prov = (SocketCanBindingProvider) provider;
+		for (String item : prov.getItemNames()) {
+			SocketCanItemConfig itemConfig = prov.getItemConfig(item);
+			SocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
+			conn.addMessageReceivedListener(this);
+			try {
+				conn.open();
+			} catch (Exception e) {
+				logger.error("Error opening the connection!");
+			}
+		}
 	}
 	
 	private void initializeItem(SocketCanItemConfig itemConfig) {
@@ -129,6 +146,12 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		SocketConnection connection = SocketCanActivator.getConnection(config.getCanInterfaceId());
 		// at this point the connection should be already open... 
 		byte[] data = LagerProtocol.commandToCanData(command, config);
+		try {
+			connection.open();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		connection.send(config.getDestId(), data);
 	}
 

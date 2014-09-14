@@ -47,7 +47,7 @@ public class SocketConnection {
 	}
 	
 	public void open() throws Exception {
-		if (canSocket != null) {
+		if (canSocket == null) {
 			try {
 				canSocket = new CanSocket(Mode.RAW);
 				canIf = new CanInterface(canSocket, canInterfaceName);
