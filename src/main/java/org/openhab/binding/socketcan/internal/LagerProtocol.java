@@ -6,6 +6,7 @@ import org.openhab.core.types.Command;
 
 public class LagerProtocol {
 
+	public static final int OP_GET_VALUE = 0b000;
 	public static final int OP_SET_VALUE = 0b00100000;
 	public static final int BROADCAST_ID = 0b11111;
 	public static final int OP_MASK = 0b11100000;
@@ -39,11 +40,22 @@ public class LagerProtocol {
 		} else if (cmd instanceof PercentType) {
 			cmdData = createSetValueData(cmd);
 		}
-		if (cmdData != null) {
-			byte outputWithMask = (byte) (config.getOutputId() & OUTPUT_MASK);
-			cmdData[0] = (byte) (cmdData[0] | outputWithMask);
-		}
+		addOutputInfo(cmdData, config);
 		return cmdData;
+	}
+	
+	public static byte[] getValue(SocketCanItemConfig config) {
+		byte[] cmdData = new byte[1];
+		cmdData[0] = OP_GET_VALUE;
+		addOutputInfo(cmdData, config);
+		return cmdData;
+	}
+	
+	public static void addOutputInfo(byte[] inoutCmdData, SocketCanItemConfig config) {
+		if (inoutCmdData != null) {
+			byte outputWithMask = (byte) (config.getOutputId() & OUTPUT_MASK);
+			inoutCmdData[0] = (byte) (inoutCmdData[0] | outputWithMask);
+		}
 	}
 
 	private static byte[] createIncrDecrData(Command cmd) {
@@ -67,4 +79,6 @@ public class LagerProtocol {
 		returnedArray[1] = (byte) val;
 		return returnedArray;
 	}
+	
+	
 }

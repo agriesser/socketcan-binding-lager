@@ -65,6 +65,8 @@ public class TestingSocketConnection implements ISocketConnection {
 			if (currentValue < 0) {
 				currentValue += 256;
 			}
+		} else if (opId == LagerProtocol.OP_GET_VALUE) {
+			// nothing to do :)
 		} else {
 			logger.debug("illegal operation!");
 			return;
@@ -82,7 +84,7 @@ public class TestingSocketConnection implements ISocketConnection {
 				byte[] data = new byte[2];
 				// in byte[0] we have only the outputid
 				data[0] = (byte) outputId;
-				data[1] = (byte) (currentValue - 127); // we need the whole byte value space...
+				data[1] = (byte) ((currentValue > 127) ? currentValue - 256 : currentValue);
 				
 				for (LagerMessageReceivedListener list : listeners) {
 					list.messageReceived(destinationId, LagerProtocol.BROADCAST_ID, data);

@@ -70,7 +70,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 			logger.error("Error opening the connection!");
 		}
 		
-		initializeItem(itemConfig);
+		initializeItem(conn, itemConfig);
 	}
 	
 	public void allBindingsChanged(BindingProvider provider) {
@@ -83,13 +83,15 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 			conn.addMessageReceivedListener(this);
 			try {
 				conn.open();
+				initializeItem(conn, itemConfig);
 			} catch (Exception e) {
 				logger.error("Error opening the connection!");
 			}
 		}
 	}
 	
-	private void initializeItem(SocketCanItemConfig itemConfig) {
+	private void initializeItem(ISocketConnection conn, SocketCanItemConfig itemConfig) {
+		conn.send(itemConfig.getDestId(), LagerProtocol.getValue(itemConfig));
 	}
 
 
