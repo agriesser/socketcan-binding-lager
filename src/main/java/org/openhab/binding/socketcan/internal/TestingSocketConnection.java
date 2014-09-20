@@ -93,9 +93,10 @@ public class TestingSocketConnection implements ISocketConnection {
 	}
 	
 	private int getValue(int destinationId, int outputId) {
-		int combined = destinationId * 100 + outputId;
+		int combined = createMapKey(destinationId, outputId);
 		Integer currentValue = currentValues.get(combined);
 		if (currentValue == null) {
+			// initialize with all the way bright ;)
 			currentValue = 255;
 			currentValues.put(Integer.valueOf(combined), currentValue);
 		}
@@ -103,8 +104,12 @@ public class TestingSocketConnection implements ISocketConnection {
 	}
 	
 	private void setValue(int destinationId, int outputId, int newValue) {
-		int combined = destinationId * 100 + outputId;
+		int combined = createMapKey(destinationId, outputId);
 		currentValues.put(combined, newValue);
+	}
+
+	private int createMapKey(int destinationId, int outputId) {
+		return destinationId * 100 + outputId;
 	}
 
 }
