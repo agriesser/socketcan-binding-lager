@@ -14,7 +14,6 @@ import org.apache.commons.lang.StringUtils;
 import org.openhab.binding.socketcan.SocketCanBindingProvider;
 import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.binding.BindingProvider;
-import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.osgi.service.cm.ConfigurationException;
@@ -120,8 +119,9 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		logger.debug("execute() method is called!");
 		for (SocketCanBindingProvider provider : providers) {
 			for (String polledItem : provider.getPolledItems()) {
-				eventPublisher.postUpdate(polledItem, new DecimalType(100));
-				int destinationId = provider.getDestinationId(polledItem);
+				SocketCanItemConfig itemConfig = provider.getItemConfig(polledItem);
+				ISocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
+				initializeItem(conn, itemConfig);
 			}
 		}
 	}
