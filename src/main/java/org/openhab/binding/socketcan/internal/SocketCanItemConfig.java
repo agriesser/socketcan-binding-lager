@@ -54,7 +54,12 @@ public class SocketCanItemConfig implements BindingConfig {
 	}
 	
 	public boolean supportsCommand(Command cmd) {
-		return cmd instanceof IncreaseDecreaseType;
+		if (cmd instanceof IncreaseDecreaseType) {
+			return true;
+		} else if (cmd instanceof PercentType) {
+			return true;
+		}
+		return false;
 	}
 
 	public State transformToNewState(byte[] data) {

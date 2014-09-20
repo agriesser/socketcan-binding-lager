@@ -1,9 +1,17 @@
 package org.openhab.binding.socketcan.internal;
 
 import org.openhab.core.library.types.IncreaseDecreaseType;
+import org.openhab.core.library.types.PercentType;
 import org.openhab.core.types.Command;
 
 public class LagerProtocol {
+
+	public static final int OP_SET_VALUE = 0b00100000;
+	public static final int BROADCAST_ID = 0b11111;
+	public static final int OP_MASK = 0b11100000;
+	public static final int OUTPUT_MASK = 0b11111;
+	public static final int OP_DECR = 0b01100000;
+	public static final int OP_INCR = 0b01000000;
 
 	public static int constructCanId(int senderId, int destinationId) {
 		int canId = 0;
@@ -21,22 +29,42 @@ public class LagerProtocol {
 	}
 	
 	public static boolean isBroadcastId(int senderOrDestination) {
-		return senderOrDestination == 0b11111;
+		return senderOrDestination == BROADCAST_ID;
 	}
 	
 	public static byte[] commandToCanData(Command cmd, SocketCanItemConfig config) {
+		byte[] cmdData = null;
 		if (cmd instanceof IncreaseDecreaseType) {
-			byte[] returnedArray = new byte[1];
-			if (cmd.equals(IncreaseDecreaseType.INCREASE)) {
-				returnedArray[0] = 0b01000000;
-			} else {
-				returnedArray[0] = 0b01100000;
-			}
-			byte outputWithMask = (byte) (config.getOutputId() & 0b11111);
-			returnedArray[0] = (byte) (returnedArray[0] | outputWithMask);
-			return returnedArray;
+			cmdData = createIncrDecrData(cmd);
+		} else if (cmd instanceof PercentType) {
+			cmdData = createSetValueData(cmd);
 		}
-		return null;
-		
+		if (cmdData != null) {
+			byte outputWithMask = (byte) (config.getOutputId() & OUTPUT_MASK);
+			cmdData[0] = (byte) (cmdData[0] | outputWithMask);
+		}
+		return cmdData;
+	}
+
+	private static byte[] createIncrDecrData(Command cmd) {
+		byte[] returnedArray = new byte[1];
+		if (cmd.equals(IncreaseDecreaseType.INCREASE)) {
+			returnedArray[0] = OP_INCR;
+		} else {
+			returnedArray[0] = OP_DECR;
+		}
+		return returnedArray;
+	}
+	
+	private static byte[] createSetValueData(Command cmd) {
+		byte[] returnedArray = new byte[2];
+		returnedArray[0] = OP_SET_VALUE;
+		PercentType pt = (PercentType) cmd;
+		long val = Math.round(pt.doubleValue() / 100 * 255);
+		if (val > 127) {
+			val -= 256;
+		}
+		returnedArray[1] = (byte) val;
+		return returnedArray;
 	}
 }

@@ -17,7 +17,7 @@ import de.entropia.can.CanSocket.Mode;
  * 
  * @author alexander
  */
-public class SocketConnection {
+public class SocketConnection implements ISocketConnection {
 	
 	private static final Logger logger = 
 			LoggerFactory.getLogger(SocketConnection.class);
@@ -81,12 +81,6 @@ public class SocketConnection {
 		} catch (IOException e) {
 			logger.error("Failed so send CanFrame: ", e);
 		}
-	}
-	
-	public interface LagerMessageReceivedListener {
-
-		public void messageReceived(int senderId, int receiverId, byte[] data);
-		
 	}
 	
 	private class ReaderThread extends Thread {

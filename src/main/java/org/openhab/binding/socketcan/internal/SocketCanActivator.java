@@ -29,7 +29,7 @@ public final class SocketCanActivator implements BundleActivator {
 	
 	private static BundleContext context;
 	
-	private static Map<String, SocketConnection> connections = new HashMap<>();
+	private static Map<String, ISocketConnection> connections = new HashMap<>();
 	
 	/**
 	 * Called whenever the OSGi framework starts our bundle
@@ -55,10 +55,10 @@ public final class SocketCanActivator implements BundleActivator {
 		return context;
 	}
 	
-	public static SocketConnection getConnection(String interfaceId) {
-		SocketConnection conn = connections.get(interfaceId);
+	public static ISocketConnection getConnection(String interfaceId) {
+		ISocketConnection conn = connections.get(interfaceId);
 		if (conn == null) {
-			conn = new SocketConnection(interfaceId);
+			conn = ConnectionFactory.createConnection(interfaceId);
 			connections.put(interfaceId, conn);
 		}
 		return conn;

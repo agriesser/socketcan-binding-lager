@@ -12,7 +12,6 @@ import java.util.Dictionary;
 
 import org.apache.commons.lang.StringUtils;
 import org.openhab.binding.socketcan.SocketCanBindingProvider;
-import org.openhab.binding.socketcan.internal.SocketConnection.LagerMessageReceivedListener;
 import org.openhab.core.binding.AbstractActiveBinding;
 import org.openhab.core.binding.BindingProvider;
 import org.openhab.core.library.types.DecimalType;
@@ -63,7 +62,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		// register as listener!
 		
 		SocketCanItemConfig itemConfig = ((SocketCanBindingProvider) provider).getItemConfig(itemName);
-		SocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
+		ISocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
 		conn.addMessageReceivedListener(this);
 		try {
 			conn.open();
@@ -80,7 +79,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 		SocketCanBindingProvider prov = (SocketCanBindingProvider) provider;
 		for (String item : prov.getItemNames()) {
 			SocketCanItemConfig itemConfig = prov.getItemConfig(item);
-			SocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
+			ISocketConnection conn = SocketCanActivator.getConnection(itemConfig.getCanInterfaceId());
 			conn.addMessageReceivedListener(this);
 			try {
 				conn.open();
@@ -131,6 +130,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	@Override
 	protected void internalReceiveCommand(String itemName, Command command) {
 		logger.debug("internalReceiveCommand() is called!");
+		logger.debug("command is = "+command.toString());
 		for (SocketCanBindingProvider provider : providers) {
 			if (provider.providesBindingFor(itemName)) {
 				SocketCanItemConfig config = provider.getItemConfig(itemName);
@@ -143,7 +143,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 	}
 	
 	private void sendCommand(SocketCanItemConfig config, Command command) {
-		SocketConnection connection = SocketCanActivator.getConnection(config.getCanInterfaceId());
+		ISocketConnection connection = SocketCanActivator.getConnection(config.getCanInterfaceId());
 		// at this point the connection should be already open... 
 		byte[] data = LagerProtocol.commandToCanData(command, config);
 		try {
