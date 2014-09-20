@@ -2,7 +2,16 @@ package org.openhab.binding.socketcan.internal;
 
 public class ConnectionFactory {
 	
-	private static boolean testMode = true; 
+	private static boolean testMode = false; 
+	
+	static {
+		try {
+			String useTestmode = System.getProperty("socketcan.testmode");
+			testMode = Boolean.parseBoolean(useTestmode);
+		} catch (Exception e) {
+			testMode = false;
+		}
+	}
 
 	public static ISocketConnection createConnection(String interfaceId) {
 		if (testMode) {
