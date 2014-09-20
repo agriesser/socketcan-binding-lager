@@ -81,5 +81,9 @@ public class SocketCanItemConfig implements BindingConfig {
 		int outputIdFromByte = b & 0b00011111;
 		return outputId == outputIdFromByte;
 	}
+	
+	public String toString() {
+		return itemName+"[destid:"+destId+",outputid:"+outputId+"]";
+	}
 
 }

@@ -197,6 +197,7 @@ public class SocketCanBinding extends AbstractActiveBinding<SocketCanBindingProv
 			for (String itemName : provider.getItemNames()) {
 				SocketCanItemConfig config = provider.getItemConfig(itemName);
 				if (config.getDestId() == senderId && config.isSameOutputId(data[0])) {
+					logger.debug("Received message for "+config.toString()+". Data is: \n"+Util.formatData(data));
 					handleMessageFrom(config, data);
 					break;
 				}
